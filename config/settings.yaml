@@ -1,0 +1,7 @@
+api_rate_limits:
+  football_api:
+    requests_per_minute: 10
+  the_odds_api:
+    requests_per_minute: 5
+
+league_selections: []
