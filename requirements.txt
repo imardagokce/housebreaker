@@ -4,6 +4,7 @@ httpx
 textual
 xgboost
 lightgbm
+scikit-learn
 scipy
 python-dotenv
 pyyaml

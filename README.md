@@ -10,7 +10,7 @@ housebreaker is being developed as a modular football analysis and betting engin
 
 - **Fetchers (`src/fetchers/`)** — asynchronous API-Football and The Odds API clients. They validate responses with Pydantic and honour the configured per-minute request limits.
 - **Engine (`src/engine/`)** — Polars-based team strength and exponentially weighted form calculations, plus SciPy Poisson scoreline and market probabilities.
-- **Machine learning (`src/ml/`)** — planned model training and prediction workflows.
+- **Machine learning (`src/ml/`)** — chronological Polars feature engineering, Elo/Glicko ratings, independent XGBoost/LightGBM home/away goal regressors, and Poisson expected-goal distributions.
 - **Strategy (`src/strategy/`)** — planned probability, value, and stake-sizing strategies.
 - **Backtesting (`src/backtest/`)** — planned historical strategy evaluation.
 - **Data and models (`data/`, `models/`)** — raw and processed data, plus saved model artefacts.
@@ -25,6 +25,8 @@ housebreaker is being developed as a modular football analysis and betting engin
 - **HTTPX** for asynchronous HTTP requests
 - **Textual** for the terminal user interface
 - **XGBoost** for machine-learning models
+- **LightGBM** for alternative gradient-boosted models
+- **scikit-learn** for the estimator API used by both model backends
 - **PyYAML** for application configuration
 
 Additional dependencies currently listed in `requirements.txt` include LightGBM, SciPy, and `python-dotenv`.
@@ -94,12 +96,37 @@ The football client also provides `fetch_team_statistics`, `fetch_fixtures`, and
 
 The odds client provides `fetch_event_odds` for odds on a specific upcoming or in-play event.
 
+### Machine Learning Usage
+
+Build historical features in date order and train independent home/away goal models:
+
+```python
+from src.ml import FeatureBuilder, GoalRegressor, ModelSettings
+
+features = FeatureBuilder().build(historical_matches)
+model = GoalRegressor(
+    ModelSettings(backend="xgboost", n_estimators=200)
+).fit(features)
+metrics = model.evaluate(held_out_features)
+model.save("models/goals.json")
+```
+
+`historical_matches` should be a Polars DataFrame with `fixture_date`, `home_team`, `away_team`, `home_goals`, `away_goals`, `home_xg`, and `away_xg` columns; `home_shots` and `away_shots` are optional. For upcoming matches, pass completed results and fixture rows separately to `FeatureBuilder.build(history, fixtures)`. Fixture features use results strictly before each fixture date. The regressor supports `xgboost` and `lightgbm` backends, MAE/RMSE evaluation, `.pkl` artefacts for either backend, and native `.json` artefacts for XGBoost. Only load pickle artefacts from trusted sources.
+
+For Poisson goal-count distributions from processed fixture features:
+
+```python
+from src.ml import predict_goal_distributions
+
+distributions = predict_goal_distributions(model, upcoming_features, max_goals=10)
+```
+
 ## Project Status & Changelog
 
 ### Current Status
 
-- **Implemented:** project scaffold, YAML-backed API rate limits, asynchronous API-Football and The Odds API fetchers, Pydantic V2 response models, a display-only Textual dashboard with reusable fixture, odds, and stake-recommendation widgets, and statistical match/form calculations.
-- **Planned:** machine-learning workflows, betting strategies, backtesting, and connecting dashboard refreshes to live data providers.
+- **Implemented:** project scaffold, YAML-backed API rate limits, asynchronous API-Football and The Odds API fetchers, Pydantic V2 response models, a display-only Textual dashboard with reusable fixture, odds, and stake-recommendation widgets, statistical match/form calculations, Polars ML feature engineering, and XGBoost/LightGBM goal regressors with Poisson inference.
+- **Planned:** betting strategies, backtesting, and connecting dashboard refreshes to live data providers.
 
 ### Changelog
 
@@ -107,3 +134,4 @@ The odds client provides `fetch_event_odds` for odds on a specific upcoming or i
 - **API fetchers:** added rate-limited asynchronous clients for team statistics, recent form, fixtures, fixture xG, and upcoming or event-specific bookmaker odds.
 - **Terminal dashboard:** added a Textual interface with league and team controls, tabbed data panels, activity/status views, fixture cards, odds tables, and fractional Kelly stake recommendations.
 - **Statistical engine:** added venue-specific attack/defence strengths, xG estimates, scoreline and 1X2/goal-line/BTTS probabilities, plus exponentially weighted team form and momentum metrics.
+- **Machine-learning module:** added leakage-aware rolling, Elo/Glicko, rest-day, and H2H features; independent home/away goal models with evaluation and persistence; and Poisson goal-count inference.
