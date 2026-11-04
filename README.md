@@ -9,13 +9,13 @@ housebreaker is being developed as a modular football analysis and betting engin
 ## Architecture
 
 - **Fetchers (`src/fetchers/`)** — asynchronous API-Football and The Odds API clients. They validate responses with Pydantic and honour the configured per-minute request limits.
-- **Engine (`src/engine/`)** — planned coordination and match-analysis logic.
+- **Engine (`src/engine/`)** — Polars-based team strength and exponentially weighted form calculations, plus SciPy Poisson scoreline and market probabilities.
 - **Machine learning (`src/ml/`)** — planned model training and prediction workflows.
 - **Strategy (`src/strategy/`)** — planned probability, value, and stake-sizing strategies.
 - **Backtesting (`src/backtest/`)** — planned historical strategy evaluation.
 - **Data and models (`data/`, `models/`)** — raw and processed data, plus saved model artefacts.
 - **Configuration (`config/settings.yaml`)** — API request limits and league selections.
-- **Terminal interface (`src/`)** — Textual is part of the planned user interface stack.
+- **Terminal interface (`src/ui/`)** — a Textual dashboard with league/team controls, tabbed data views, activity and status panels, and reusable display widgets.
 
 ## Tech Stack
 
@@ -23,7 +23,7 @@ housebreaker is being developed as a modular football analysis and betting engin
 - **Polars** for columnar data processing
 - **Pydantic V2** for validating API responses and application data
 - **HTTPX** for asynchronous HTTP requests
-- **Textual** for the planned terminal user interface
+- **Textual** for the terminal user interface
 - **XGBoost** for machine-learning models
 - **PyYAML** for application configuration
 
@@ -57,13 +57,13 @@ Additional dependencies currently listed in `requirements.txt` include LightGBM,
 
 4. Review `config/settings.yaml`. The default request limits are conservative, and `league_selections` is empty until leagues are chosen.
 
-5. Run the current entry point:
+5. Launch the terminal dashboard:
 
    ```shell
    python main.py
    ```
 
-   The entry point is currently a stub; API clients can be used directly from application code.
+   The dashboard provides league and team selectors, fixtures and odds tables, value-signal and model-performance panels, an activity log, and status indicators. Live data-provider integration is not yet connected to the dashboard.
 
 ### Fetcher Usage
 
@@ -98,10 +98,12 @@ The odds client provides `fetch_event_odds` for odds on a specific upcoming or i
 
 ### Current Status
 
-- **Implemented:** project scaffold, YAML-backed API rate limits, asynchronous API-Football and The Odds API fetchers, and Pydantic V2 response models.
-- **Planned:** analysis engine, machine-learning workflows, betting strategies, backtesting, and Textual interface.
+- **Implemented:** project scaffold, YAML-backed API rate limits, asynchronous API-Football and The Odds API fetchers, Pydantic V2 response models, a display-only Textual dashboard with reusable fixture, odds, and stake-recommendation widgets, and statistical match/form calculations.
+- **Planned:** machine-learning workflows, betting strategies, backtesting, and connecting dashboard refreshes to live data providers.
 
 ### Changelog
 
 - **Initial scaffold:** added the configuration, data, model, and source package structure.
 - **API fetchers:** added rate-limited asynchronous clients for team statistics, recent form, fixtures, fixture xG, and upcoming or event-specific bookmaker odds.
+- **Terminal dashboard:** added a Textual interface with league and team controls, tabbed data panels, activity/status views, fixture cards, odds tables, and fractional Kelly stake recommendations.
+- **Statistical engine:** added venue-specific attack/defence strengths, xG estimates, scoreline and 1X2/goal-line/BTTS probabilities, plus exponentially weighted team form and momentum metrics.

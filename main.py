@@ -1,5 +1,7 @@
 def main() -> None:
-    pass
+    from src.ui.app import HousebreakerApp
+
+    HousebreakerApp().run()
 
 
 if __name__ == "__main__":
